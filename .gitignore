@@ -1,5 +1,5 @@
 .*.sw?
 *.db
-*_env.sh
+*environ.sh
 tools/secret
 *.json
