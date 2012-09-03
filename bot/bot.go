@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/gokyle/twitter"
 	rss "github.com/jteeuwen/go-pkg-rss"
-	"rsstotwitter/dbase"
+	"github.com/gokyle/rsstotwitter/dbase"
 	"log"
 	"os"
 	"strings"
@@ -87,7 +87,7 @@ func ADNStatus(title string, link string) string {
 // if not, post it. This is designed such that it can be run from a
 // goroutine.
 func (s story) process(db *sql.DB) error {
-	if posted, err := lobsterdb.StoryPosted(db, s.guid); err != nil {
+	if posted, err := dbase.StoryPosted(db, s.guid); err != nil {
 		log.Printf("[!] bot StoryHandler failure: %s\n", err)
 		return err
 	} else if posted {
@@ -99,13 +99,13 @@ func (s story) process(db *sql.DB) error {
 	if err := s.post(); err != nil {
 		log.Printf("[!] error posting status: %s\n", err)
 		return err
-	} else if err = lobsterdb.PostStory(db, s.guid); err != nil {
+	} else if err = dbase.PostStory(db, s.guid); err != nil {
 		// once we've posted to twitter, we need to make sure
 		// the database is updated!
 		var errors int64 = 1
 		for {
 			log.Printf("[!] %d errors posting to database", errors)
-			if err = lobsterdb.PostStory(db, s.guid); err != nil {
+			if err = dbase.PostStory(db, s.guid); err != nil {
 				break
 			}
 			errors++
@@ -127,20 +127,19 @@ func (s story) post() (err error) {
 	return err
 }
 
-func getStories() error {
+func getStories(feedUri string) {
 	timeout := 5          // 5 seconds
 	feedTarget := feedUri // rss feed to follow
 	feed := rss.New(timeout, true, nil, txNewItems)
 	for {
 		if err := feed.Fetch(feedTarget, nil); err != nil {
 			log.Printf("bot feed failure %s: %s", feedTarget, err)
-			return err
+                        continue
 		}
 
 		<-time.After(time.Duration(feed.SecondsTillUpdate() * 1e9))
 	}
 
-	return nil
 }
 
 // Kick off the bot with Run(). Its signature matches the one required by
@@ -161,14 +160,17 @@ func Run() error {
 		go worker(int8(i))
 	}
 
-	log.Println("[+] bot starting feed monitor")
-	err := getStories()
+	log.Println("[+] bot starting feed monitors")
+        for _, feedUri := range feedUris {
+                log.Println("bot starting monitor on feed ", feedUri)
+                go getStories(feedUri)
+        }
 
-	return err
+	return nil
 }
 
 func worker(id int8) {
-        db, err := lobsterdb.ConnectFromEnv()
+        db, err := dbase.ConnectFromEnv()
         if err != nil {
 	        log.Println("[+] lobsterdb connected to database (preparing select)")
         }

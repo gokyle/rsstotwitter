@@ -8,13 +8,13 @@ import (
 )
 
 func rootPage(w http.ResponseWriter, req *http.Request) {
-        db, err := lobsterdb.ConnectFromEnv()
+        db, err := dbase.ConnectFromEnv()
         stats := ""
 
         if err == nil {
                 stats += "stats\n=====\n"
                 stats += "last tweet: " + bot.LastUpdate()
-	        stats += fmt.Sprintf("\nstories posted: %d\n", lobsterdb.CountStories(db))
+	        stats += fmt.Sprintf("\nstories posted: %d\n", dbase.CountStories(db))
         } else {
                 stats += "couldn't connect to database: " + err.Error()
         }
