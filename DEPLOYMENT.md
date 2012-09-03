@@ -50,3 +50,25 @@ setting up the deployment to Heroku was pretty easy and very
 You'll need the [Heroku toolbelt](https://toolbelt.heroku.com/), particularly
 if you want to use the environment setup shell script. There is an included
 `heroku_setup.sh` script to automate the process.
+
+## Database
+The database expects a table `posted` with two columns: `guid` and `posted`.
+
+Example database setup code:
+```sql
+create role ${PG_USER}
+        login 
+        password '${PG_PASS}';
+create database ${PG_DBNAME} 
+                ENCODING = 'UTF8' 
+                LC_COLLATE = 'en_US.UTF-8' 
+                LC_CTYPE = 'en_US.UTF-8' 
+                template = template0;
+ALTER DATABASE ${PG_DBNAME} OWNER TO ${PG_USER} ;
+\connect ${PG_DBNAME}
+create table posted (guid text unique not null, 
+                     posted boolean default false not null);
+create index posted_idx on posted;
+```
+
+

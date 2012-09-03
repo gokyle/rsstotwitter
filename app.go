@@ -1,6 +1,6 @@
 /*
-   golobsters is an application that checks for new posts on lobste.rs
-   and posts new posts to the corresponding Twitter account.
+   rsstotwitter is an application that checks for new RSS posts
+   and posts them to the corresponding Twitter account.
 */
 
 package main
@@ -8,8 +8,8 @@ package main
 import (
 	"fmt"
 	"github.com/gokyle/gomon/monitor"
-	"golobsters/bot"
-	"golobsters/frontend"
+	"github.com/gokyle/rsstotwitter/bot"
+	"github.com/gokyle/rsstotwitter/frontend"
 	"log"
 	"os"
 )

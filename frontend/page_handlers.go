@@ -2,8 +2,8 @@ package frontend
 
 import (
 	"fmt"
-	"golobsters/bot"
-	"golobsters/lobsterdb"
+	"github.com/gokyle/rsstotwitter/bot"
+	"github.com/gokyle/rsstotwitter/dbase"
 	"net/http"
 )
 
@@ -20,8 +20,8 @@ func rootPage(w http.ResponseWriter, req *http.Request) {
         }
 
 	page := "twitter account: @lobsternews\n"
-	page += "git repo: git clone git://github.com/gokyle/golobsters.git\n"
-	page += "github page: http://gokyle.github.com/golobsters/\n\n"
+	page += "git repo: git clone git://github.com/gokyle/rsstotwitter.git\n"
+	page += "github page: http://gokyle.github.com/rsstotwitter/\n\n"
         page += stats
 	fmt.Fprintln(w, page)
 }

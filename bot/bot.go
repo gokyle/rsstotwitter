@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/gokyle/twitter"
 	rss "github.com/jteeuwen/go-pkg-rss"
-	"golobsters/lobsterdb"
+	"rsstotwitter/dbase"
 	"log"
 	"os"
 	"strings"
@@ -15,7 +15,7 @@ import (
 )
 
 // urls
-var feedUri = os.Getenv("RSS_FEED")
+var feedUris = strings.Split(os.Getenv("RSS_FEED"), ",")
 
 // 140 characters - length of a t.co link
 const maxTwitterStatus = 115
