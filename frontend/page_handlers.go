@@ -10,6 +10,7 @@ import (
 func rootPage(w http.ResponseWriter, req *http.Request) {
         db, err := dbase.ConnectFromEnv()
         stats := ""
+        page := ""
 
         if err == nil {
                 stats += "stats\n=====\n"
@@ -19,9 +20,6 @@ func rootPage(w http.ResponseWriter, req *http.Request) {
                 stats += "couldn't connect to database: " + err.Error()
         }
 
-	page := "twitter account: @lobsternews\n"
-	page += "git repo: git clone git://github.com/gokyle/rsstotwitter.git\n"
-	page += "github page: http://gokyle.github.com/rsstotwitter/\n\n"
         page += stats
 	fmt.Fprintln(w, page)
 }
