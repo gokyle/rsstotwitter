@@ -49,4 +49,4 @@ setting up the deployment to Heroku was pretty easy and very
 
 You'll need the [Heroku toolbelt](https://toolbelt.heroku.com/), particularly
 if you want to use the environment setup shell script. There is an included
-`heroku_setup.sh` script to automate much of the process.
+`heroku_setup.sh` script to automate the process.
