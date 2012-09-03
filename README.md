@@ -49,3 +49,7 @@ the decision to base this on Postgres.
 
 See also the `DEPLOYMENT.md` file that ships with the source code.
 
+### Setting Up
+You will need to run `tools/customise.sh` in the project root to properly
+set up imports.
+

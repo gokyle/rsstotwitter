@@ -71,4 +71,4 @@ create table posted (guid text unique not null,
 create index posted_idx on posted;
 ```
 
-
+There are two example SQL files in the `dbase` directory.
