@@ -1,0 +1,183 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Rsstotwitter by gokyle</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Rsstotwitter</h1>
+        <p>Post stories from RSS to Twitter.</p>
+
+        <p class="view"><a href="https://github.com/gokyle/rsstotwitter">View the Project on GitHub <small>gokyle/rsstotwitter</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/gokyle/rsstotwitter/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/gokyle/rsstotwitter/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/gokyle/rsstotwitter">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>Overview</h1>
+
+<p><code>rsstotwitter</code> is an application that posts stories from 
+an RSS feed to Twitter.</p>
+
+<p>There is an experimental web interface (which by default runs on port 8080)
+where I am learning how to do that type of work in Go.</p>
+
+<h2>Background</h2>
+
+<p><code>rsstotwitter</code> started out as a specific application to post news stories
+from <a href="https://lobste.rs">lobste.rs</a> to <a href="https://twitter.com/lobsternews">Twitter</a>.</p>
+
+<p>The first version was written in 92 source lines of code in Python, and is
+a fairly basic system based on SQLite. I've been learning
+<a href="http://www.golang.org">Go</a> lately, and needed a project to work on,
+preferably writing some type of webapp as that is an area I have no experience
+in. Ergo, the decision to rewrite <a href="https://kisom.github.com/lobsterpie">lobsterpie</a>
+in Go.</p>
+
+<h2>Architecture</h2>
+
+<p><code>rsstotwitter</code> is comprised of two main components, <code>bot</code> (the backend) and
+<code>frontend</code>. The backend employs a worker pool using goroutines and channels,
+while the frontend simply displays the last time the bot updated.</p>
+
+<p>The backend starts up the worker pool, which communicate via a channel for
+new stories. This channel is written to by the RSS feed parser, which is in
+a separate goroutine. When the RSS feed is updated, it reads the entries,
+converts them to the internal data structure that represents a story, and
+writes that to the channel. The next available worker picks it up, checks
+whether the story has already been posted, and if not, posts the story to
+Twitter and marks the story as read in the database. Reading from a channel
+blocks, so each worker essentially sleeps while waiting for new stories.</p>
+
+<h2>Deployment</h2>
+
+<p>The code is designed to be deployable to <a href="https://www.heroku.com">Heroku</a>,
+and uses a <a href="http://www.postgres.org">Postgres</a> database that is configurable
+from the environment. As the application effectively only has one user, the 
+transaction cost isn't an issue.</p>
+
+<p>I had originally wanted to use <a href="https://www.redis.io">Redis</a> as the datastore,
+but Heroku's Redis addon costs money. This app generates no revenue, so I
+didn't want to end up paying for keeping it running; Redis also requires
+an SSL tunnel in order to communicate securely with remote datastores which
+would end up being a hassle to setup. I already had a VPS set up with Postgres,
+so I ended up just using that. It is overkill, as the table merely stores the
+guid of the story, but the infrastructure was already in place, and therefore
+the decision to base this on Postgres.</p>
+
+<p>See also the <code>DEPLOYMENT</code> section.</p>
+
+<h2>Setting Up</h2>
+
+<p>You will need to run <code>tools/customise.sh</code> in the project root to properly
+set up imports.</p>
+
+<h1>Deployment Instructions</h1>
+
+<h2>Environment Variables</h2>
+
+<p>The <code>environ.sh</code> file contains a template for the relevant environment 
+variables. You should copy it to a new file to ensure secrets don't leak
+into your Git repository.</p>
+
+<p>These variables are:</p>
+
+<h3>Database</h3>
+
+<ul>
+<li><code>PG_DBNAME</code></li>
+<li><code>PG_USER</code></li>
+<li><code>PG_PASS</code></li>
+<li><code>PG_HOST</code></li>
+<li><code>PG_PORT</code></li>
+<li><code>PG_SSLMODE</code></li>
+</ul><h3>Twitter</h3>
+
+<p>Create an application on <a href="https://dev.twitter.com">Twitter</a> and generate the
+OAuth keys from the web interface. Copy those keys into the config script.
+These correspond to the consumer key, consumer secret, access token, and
+access secret.</p>
+
+<ul>
+<li><code>TW_CKEY</code></li>
+<li><code>TW_CSEC</code></li>
+<li><code>TW_ATOK</code></li>
+<li><code>TW_ASEC</code></li>
+</ul><h3>Feed</h3>
+
+<ul>
+<li>
+<code>RSS_FEED</code> should specify the RSS feed to follow.</li>
+</ul><h3>Optional: Mail</h3>
+
+<ul>
+<li><code>MAIL_SERVER</code></li>
+<li><code>MAIL_USER</code></li>
+<li><code>MAIL_PASS</code></li>
+<li><code>MAIL_ADDRESS</code></li>
+<li><code>MAIL_PORT</code></li>
+<li><code>MAIL_TO</code></li>
+</ul><h3>Optional: Pushover</h3>
+
+<p>See the <a href="https://www.pushover.net">Pushover</a> to register an application and
+get a user key.</p>
+
+<ul>
+<li><code>PO_APIKEY</code></li>
+<li><code>PO_USER</code></li>
+</ul><h2>Heroku</h2>
+
+<p><code>rsstotwitter</code> uses the Heroku Go buildpack, which so far runs pretty smoothly;
+setting up the deployment to Heroku was pretty easy and very
+<a href="https://gist.github.com/299535bbf56bf3016cba">straightforward</a>.</p>
+
+<p>You'll need the <a href="https://toolbelt.heroku.com/">Heroku toolbelt</a>, particularly
+if you want to use the environment setup shell script. There is an included
+<code>heroku_setup.sh</code> script to automate the process.</p>
+
+<h2>Database</h2>
+
+<p>The database expects a table <code>posted</code> with two columns: <code>guid</code> and <code>posted</code>.</p>
+
+<p>Example database setup code:</p>
+
+<div class="highlight"><pre><span class="k">create</span> <span class="k">role</span> <span class="err">${</span><span class="n">PG_USER</span><span class="err">}</span>
+        <span class="n">login</span> 
+        <span class="n">password</span> <span class="s1">'${PG_PASS}'</span><span class="p">;</span>
+<span class="k">create</span> <span class="k">database</span> <span class="err">${</span><span class="n">PG_DBNAME</span><span class="err">}</span> 
+                <span class="k">ENCODING</span> <span class="o">=</span> <span class="s1">'UTF8'</span> 
+                <span class="n">LC_COLLATE</span> <span class="o">=</span> <span class="s1">'en_US.UTF-8'</span> 
+                <span class="n">LC_CTYPE</span> <span class="o">=</span> <span class="s1">'en_US.UTF-8'</span> 
+                <span class="k">template</span> <span class="o">=</span> <span class="n">template0</span><span class="p">;</span>
+<span class="k">ALTER</span> <span class="k">DATABASE</span> <span class="err">${</span><span class="n">PG_DBNAME</span><span class="err">}</span> <span class="k">OWNER</span> <span class="k">TO</span> <span class="err">${</span><span class="n">PG_USER</span><span class="err">}</span> <span class="p">;</span>
+<span class="err">\</span><span class="k">connect</span> <span class="err">${</span><span class="n">PG_DBNAME</span><span class="err">}</span>
+<span class="k">create</span> <span class="k">table</span> <span class="n">posted</span> <span class="p">(</span><span class="n">guid</span> <span class="nb">text</span> <span class="k">unique</span> <span class="k">not</span> <span class="k">null</span><span class="p">,</span> 
+                     <span class="n">posted</span> <span class="nb">boolean</span> <span class="k">default</span> <span class="k">false</span> <span class="k">not</span> <span class="k">null</span><span class="p">);</span>
+<span class="k">create</span> <span class="k">index</span> <span class="n">posted_idx</span> <span class="k">on</span> <span class="n">posted</span><span class="p">;</span>
+</pre></div>
+
+<p>There are two example SQL files in the <code>dbase</code> directory.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/gokyle">gokyle</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
